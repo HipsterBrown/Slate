@@ -1,0 +1,23 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "Hipsterbrown",
+    "longName": "Dictation Test",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "3",
+    "shortName": "Dictation Test",
+    "targetPlatforms": [
+        "basalt",
+        "chalk"
+    ],
+    "uuid": "1d3ce7e5-eea8-481a-b136-09db5c6286ff",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
