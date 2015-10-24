@@ -2,6 +2,9 @@
 
 Window *my_window;
 TextLayer *s_output_layer;
+StatusBarLayer *s_status_bar;
+ActionBarLayer *s_action_bar;
+GBitmap *s_mic_bitmap;
 
 DictationSession *s_dictation_session;
 char s_last_text[512];
@@ -18,11 +21,17 @@ bool send_to_phone(char *transcription) {
   return true;
 }
 
+void timer_callback(void *context) {
+  text_layer_set_text(s_output_layer, PBL_IF_ROUND_ELSE("Set A Reminder ->", "Set A Reminder"));
+}
+
 void in_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *message_tuple = dict_find(iter, 0x0);
   
   strcpy(s_last_text, message_tuple->value->cstring);
   text_layer_set_text(s_output_layer, s_last_text);
+  
+  app_timer_register(10000, timer_callback, NULL);
 }
 
 void in_dropped_handler(AppMessageResult reason, void *context) {
@@ -40,9 +49,7 @@ void dictation_session_callback(DictationSession *session, DictationSessionStatu
     
     send_to_phone(transcription);
   } else {
-    char s_failed_buff[128];
-    snprintf(s_failed_buff, sizeof(s_failed_buff), "Transcription failed:\n\n%d", (int)status);
-    text_layer_set_text(s_output_layer, s_failed_buff);
+    text_layer_set_text(s_output_layer, PBL_IF_ROUND_ELSE("Set A Reminder ->", "Set A Reminder"));
   }
 }
 
@@ -57,11 +64,32 @@ void click_config_provider(void *context) {
 void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
+  int16_t width = bounds.size.w - ACTION_BAR_WIDTH;
+  GRect frame = GRect(0, 0, width, STATUS_BAR_LAYER_HEIGHT);
   
-  s_output_layer = text_layer_create(GRect(bounds.origin.x, (bounds.size.h - 24) / 2, bounds.size.w, bounds.size.h));
-  text_layer_set_text(s_output_layer, "Press Select to get input!");
+  s_mic_bitmap = gbitmap_create_with_resource(RESOURCE_ID_MIC);
+  
+  s_action_bar = action_bar_layer_create();
+  action_bar_layer_set_icon_animated(s_action_bar, BUTTON_ID_SELECT, s_mic_bitmap, true);
+  action_bar_layer_set_background_color(s_action_bar, GColorElectricUltramarine);
+  action_bar_layer_set_click_config_provider(s_action_bar, click_config_provider);
+  
+  s_status_bar = status_bar_layer_create();
+  status_bar_layer_set_colors(s_status_bar, GColorWhite, GColorBlack);
+  
+  #if defined(PBL_RECT)
+    layer_set_frame(status_bar_layer_get_layer(s_status_bar), frame);
+  #endif
+  
+  s_output_layer = text_layer_create(GRect(bounds.origin.x, bounds.origin.y + PBL_IF_ROUND_ELSE(72, 66), width - 2, bounds.size.h));
+  text_layer_set_text(s_output_layer, PBL_IF_ROUND_ELSE("Set A Reminder ->", "Set A Reminder"));
+  text_layer_set_font(s_output_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
   text_layer_set_text_alignment(s_output_layer, GTextAlignmentCenter);
+  
+  // add all the layers
   layer_add_child(window_layer, text_layer_get_layer(s_output_layer));
+  action_bar_layer_add_to_window(s_action_bar, window);
+  layer_add_child(window_layer, status_bar_layer_get_layer(s_status_bar));
 }
 
 void window_unload(Window *window) {
