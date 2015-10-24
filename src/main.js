@@ -31,6 +31,18 @@ var rDays = /(on)?\s?(sun(day)?|mon(day)?|tues(day)?|wed(nesday)?|thur(sday|s)?|
 var rMonths = /((\d{1,2})(st|nd|rd|th))\sof\s(january|february|march|april|may|june|july|august|september|october|november|december)/;
 var rDayMod = /(in the|this|at)?\s?(morning|noon|afternoon|night|evening|midnight)/;
 
+var numberMap = {
+  "one": "1",
+  "two": "2",
+  "three": "3",
+  "four": "4",
+  "five": "5",
+  "six": "6",
+  "seven": "7",
+  "eight": "8",
+  "nine": "9"
+};
+
 // Set callback for the app ready event
 Pebble.addEventListener("ready", function(e) {
   console.log("connect! " + e.ready);
@@ -58,6 +70,10 @@ function checkText(text) {
 
 function createReminderPin(text) {
   text = text.replace(/remind (me )?(to |about )?/, '');
+  Object.keys(numberMap).forEach(function (num) {
+    var numRegExp = new RegExp('\\b' + num + '\\b', 'g');
+    text = text.replace(numRegExp, numberMap[num]);
+  });
   
   var time;
   if (/\b(tomorrow|today|minute(s)?|hour(s)?|am|pm)\b/.test(text)) {
@@ -126,7 +142,7 @@ function sendPin(pin) {
   xhr.open('PUT', url);
   
   Pebble.getTimelineToken(function (token) {
-    console.log(token);
+    console.log('Token: ' + token);
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.setRequestHeader('X-User-Token', '' + token);
     
