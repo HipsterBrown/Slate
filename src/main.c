@@ -44,9 +44,6 @@ void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, voi
 
 void dictation_session_callback(DictationSession *session, DictationSessionStatus status, char *transcription, void *context) {
   if (status == DictationSessionStatusSuccess) {
-    snprintf(s_last_text, sizeof(s_last_text), "Transcription:\n\n%s", transcription);
-    text_layer_set_text(s_output_layer, s_last_text);
-    
     send_to_phone(transcription);
   } else {
     text_layer_set_text(s_output_layer, PBL_IF_ROUND_ELSE("Set A Reminder ->", "Set A Reminder"));

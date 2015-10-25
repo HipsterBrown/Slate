@@ -4,10 +4,20 @@
         ""
     ],
     "companyName": "Hipsterbrown",
-    "longName": "Dictation Test",
+    "longName": "Slate",
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/Slate-Tiny.png",
+                "menuIcon": true,
+                "name": "ICON",
+                "targetPlatforms": [
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "png"
+            },
             {
                 "file": "images/mic.png",
                 "name": "MIC",
@@ -20,13 +30,13 @@
         ]
     },
     "sdkVersion": "3",
-    "shortName": "Dictation Test",
+    "shortName": "Slate",
     "targetPlatforms": [
         "basalt",
         "chalk"
     ],
     "uuid": "1d3ce7e5-eea8-481a-b136-09db5c6286ff",
-    "versionLabel": "1.1",
+    "versionLabel": "1.0",
     "watchapp": {
         "watchface": false
     }
