@@ -1,0 +1,29 @@
+{
+  "name": "slate",
+  "version": "1.0.0",
+  "description": "A smart assistant for Pebble",
+  "main": " ",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node tests | tap-spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HipsterBrown/Slate.git"
+  },
+  "author": "HipsterBrown",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/HipsterBrown/Slate/issues"
+  },
+  "homepage": "https://github.com/HipsterBrown/Slate#readme",
+  "dependencies": {
+    "date.js": "hipsterbrown/date"
+  },
+  "devDependencies": {
+    "tap-spec": "^4.1.0",
+    "tape": "^4.2.2"
+  }
+}
