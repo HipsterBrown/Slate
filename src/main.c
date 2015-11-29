@@ -1,13 +1,23 @@
 #include <pebble.h>
 
+#define NEW_USER_PKEY 1
+#define NEW_USER_DEFAULT true
+
 Window *my_window;
+Window *help_window;
 TextLayer *s_output_layer;
+TextLayer *s_help_layer;
 StatusBarLayer *s_status_bar;
 ActionBarLayer *s_action_bar;
+ActionBarLayer *s_help_action_bar;
 GBitmap *s_mic_bitmap;
+GBitmap *s_check_bitmap;
 
 DictationSession *s_dictation_session;
 char s_last_text[512];
+
+bool s_new_user = NEW_USER_DEFAULT;
+bool s_continue_reminder = false;
 
 bool send_to_phone(char *transcription) {
   DictionaryIterator *iter;
@@ -50,12 +60,72 @@ void dictation_session_callback(DictationSession *session, DictationSessionStatu
   }
 }
 
-void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+void help_window_pop() {
+  s_new_user ? APP_LOG(APP_LOG_LEVEL_DEBUG, "New user!") : APP_LOG(APP_LOG_LEVEL_DEBUG, "Onboarded user!");
+  window_stack_pop(true);
+  window_destroy(help_window);
+}
+
+void help_click_handler(ClickRecognizerRef recognizer, void *context) {
+  s_new_user = false;
+  help_window_pop();
+}
+
+void help_click_config_provider(void *context) {
+  window_single_click_subscribe(BUTTON_ID_SELECT, help_click_handler);
+  window_single_click_subscribe(BUTTON_ID_BACK, help_click_handler);
+}
+
+void help_window_load(Window *window) {
+  Layer *window_layer = window_get_root_layer(window);
+  GRect bounds = layer_get_bounds(window_layer);
+  int16_t width = bounds.size.w - ACTION_BAR_WIDTH;
+  
+  s_check_bitmap = gbitmap_create_with_resource(RESOURCE_ID_CHECK);
+  
+  s_help_action_bar = action_bar_layer_create();
+  action_bar_layer_set_icon_animated(s_help_action_bar, BUTTON_ID_SELECT, s_check_bitmap, true);
+  action_bar_layer_set_background_color(s_help_action_bar, GColorElectricUltramarine);
+  action_bar_layer_set_click_config_provider(s_help_action_bar, help_click_config_provider);
+  
+  s_help_layer = text_layer_create(GRect(bounds.origin.x, bounds.origin.y + PBL_IF_ROUND_ELSE(60, 50), width - 5, bounds.size.h));
+  text_layer_set_text(s_help_layer, PBL_IF_ROUND_ELSE("Example Reminder:\n\n\"Remind me to pick up milk at 5pm\" ", "Example Reminder:\n\n\"Remind me to pick up milk at 5pm\" "));
+  text_layer_set_font(s_help_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_text_alignment(s_help_layer, GTextAlignmentCenter);
+  
+  layer_add_child(window_layer, text_layer_get_layer(s_help_layer));
+  action_bar_layer_add_to_window(s_help_action_bar, window);
+}
+
+void help_window_unload(Window *window) {
+  text_layer_destroy(s_help_layer);
   dictation_session_start(s_dictation_session);
+}
+
+void help_window_push() {
+  if(!help_window) {
+    help_window = window_create();
+    window_set_click_config_provider(help_window, help_click_config_provider);
+    window_set_window_handlers(help_window, (WindowHandlers) {
+      .load = help_window_load,
+      .unload = help_window_unload
+    });
+    window_stack_push(help_window, true);
+  }
+}
+
+void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+  s_continue_reminder = true;
+  s_new_user ? help_window_push() : dictation_session_start(s_dictation_session);
+}
+
+void down_click_handler(ClickRecognizerRef recognizer, void *context) {
+  help_window_push();
 }
 
 void click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
+  window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
 }
 
 void window_load(Window *window) {
@@ -93,12 +163,14 @@ void window_unload(Window *window) {
   text_layer_destroy(s_output_layer);
 }
 
+
 void handle_init(void) {
   app_message_register_inbox_received(in_received_handler);
   app_message_register_inbox_dropped(in_dropped_handler);
   app_message_register_outbox_failed(out_failed_handler);
   
   app_message_open(512, 512);
+  s_new_user = persist_exists(NEW_USER_PKEY) ? persist_read_bool(NEW_USER_PKEY) : NEW_USER_DEFAULT;
   
   my_window = window_create();
   window_set_click_config_provider(my_window, click_config_provider);
@@ -112,6 +184,7 @@ void handle_init(void) {
 }
 
 void handle_deinit(void) {
+  persist_write_bool(NEW_USER_PKEY, s_new_user);
   dictation_session_destroy(s_dictation_session);
   window_destroy(my_window);
 }
