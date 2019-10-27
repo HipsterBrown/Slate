@@ -99,7 +99,10 @@ void help_window_load(Window *window) {
 
 void help_window_unload(Window *window) {
   text_layer_destroy(s_help_layer);
-  dictation_session_start(s_dictation_session);
+  if (s_continue_reminder) {
+    s_continue_reminder = false;
+    dictation_session_start(s_dictation_session);
+  }
 }
 
 void help_window_push() {
